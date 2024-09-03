@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Person
+from models import db, User, Person, PersonFavorite
 #from models import Person
 
 app = Flask(__name__)
@@ -37,55 +37,46 @@ def sitemap():
     return generate_sitemap(app)
 
 @app.route('/user', methods=['GET'])
-def handle_hello():
+def get_users():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+    users = User.query.all()
 
-    return jsonify(response_body), 200
+    return jsonify([user.serialize() for user in users]), 200
 
 @app.route('/people', methods=['GET'])
 def get_all_people():
 
-    error = None
-    serialized_people = None
+    people = Person.query.all()
 
-    try:
-        people = Person.query.all()
-        serialized_people = [person.serialize() for person in people]
-        # print(data)
-        
-    except:
-        error = 'Failed to fetch people'        
+    return jsonify([person.serialize() for person in people]), 200
 
-    response_body = {
-        "data": serialized_people,
-        "error": error,
-    }
-    status_code = 200 if not error else 500
+@app.route('/users/<int:user_id>/favorites', methods=['GET'])
+def get_all_user_favorites(user_id):
 
-    return jsonify(response_body), status_code
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify({"error": "user not found"}), 404
 
-@app.route('/users/favorites', methods=['GET'])
-def get_all_user_favorites():
+    user_favorites = [person.serialize() for person in user.person_favorites]
+    return jsonify({"data": user_favorites}), 200
 
-    error = None
-    user_favorites = None
 
-    try:
-        user = User.query.get(1)
-        user_favorites = [person_favorite.serialize() for person_favorite in user.favorites]
-    except:
-        error = 'Failed to fetch people'        
 
-    response_body = {
-        "data": user_favorites,
-        "error": error,
-    }
-    status_code = 200 if not error else 500
+@app.route('/favorite/people/<int:person_id>', methods=['POST'])
+def add_favorite_person(person_id):
+    user_id = request.json.get('user_id')
+    favorite = PersonFavorite(user_id=user_id, person_id=person_id)
+    db.session.add(favorite)
+    db.session.commit()
+    return jsonify(favorite.serialize()), 201
 
-    return jsonify(response_body), status_code
+@app.route('/favorite/people/<int:person_id>', methods=['DELETE'])
+def delete_favorite_person(person_id):
+    user_id = request.json.get('user_id')
+    favorite = PersonFavorite.query.filter_by(user_id=user_id, person_id=person_id).first_or_404() 
+    db.session.delete(favorite)
+    db.session.commit()
+    return '' , 204  
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

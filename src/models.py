@@ -3,11 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class User(db.Model):
+    __tablename__ = 'user'
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False)
-    person_favorites = db.relationship('PersonFavorite', back_populates='user_favorites')
+    person_favorites = db.relationship('Person', secondary="person_favorite", back_populates='favorited_by_users')
 
     def __repr__(self):
         return '<User %r>' % self.email
@@ -27,8 +28,7 @@ class Person(db.Model):
     name = db.Column(db.String(255), nullable=False)
     height = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=False)
-    # home_world = 
-    favorites = db.relationship('PersonFavorite', back_populates='person_favorites')
+    favorited_by_users = db.relationship('User', secondary="person_favorite", back_populates='person_favorites')
 
     def serialize(self):
         return {
@@ -49,12 +49,13 @@ class PersonFavorite(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     person_id = db.Column(db.Integer, db.ForeignKey('person.id'), nullable=False)
 
-    user_favorites = db.relationship('User', back_populates='person_favorites')
-    person_favorites = db.relationship('Person', back_populates='favorites')
 
     def serialize(self):
         return {
             "id": self.id,
             "user_id": self.user_id,
             "person_id": self.person_id
-        }
+        } 
+
+    def __repr__(self):
+        return f'<PersonFavorite user_id={self.user_id} person_id={self.person_id}>'
