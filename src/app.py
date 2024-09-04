@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Person, PersonFavorite
+from models import db, User, Person, PersonFavorite, Planet, PlanetFavorite
 #from models import Person
 
 app = Flask(__name__)
@@ -77,6 +77,30 @@ def delete_favorite_person(person_id):
     db.session.delete(favorite)
     db.session.commit()
     return '' , 204  
+
+@app.route('/planet', methods=['GET'])
+def get_all_planet():
+
+    space = Planet.query.all()
+
+    return jsonify([planet.serialize() for planet in space]), 200
+
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
+def add_favorite_planet(planet_id):
+    user_id = request.json.get('user_id')
+    favorite = PlanetFavorite(user_id=user_id, planet_id=planet_id)
+    db.session.add(favorite)
+    db.session.commit()
+    return jsonify(favorite.serialize()), 201
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
+def delete_favorite_planet(planet_id):
+    user_id = request.json.get('user_id')
+    favorite = PlanetFavorite.query.filter_by(user_id=user_id, planet_id=planet_id).first_or_404() 
+    db.session.delete(favorite)
+    db.session.commit()
+    return '' , 204 
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
