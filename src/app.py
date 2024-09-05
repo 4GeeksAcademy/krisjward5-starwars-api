@@ -70,6 +70,15 @@ def add_favorite_person(person_id):
     db.session.commit()
     return jsonify(favorite.serialize()), 201
 
+
+@app.route('/people/<int:person_id>', methods=['GET'])
+def get_person_by_id(person_id):
+    person = Person.query.get(person_id)
+    if person is None:
+        return jsonify({"error": "person not found"}), 404
+    
+    return jsonify(person.serialize()), 200
+
 @app.route('/favorite/people/<int:person_id>', methods=['DELETE'])
 def delete_favorite_person(person_id):
     user_id = request.json.get('user_id')
@@ -84,6 +93,14 @@ def get_all_planet():
     space = Planet.query.all()
 
     return jsonify([planet.serialize() for planet in space]), 200
+
+@app.route('/planet/<int:planet_id>', methods=['GET'])
+def get_planet_by_id(planet_id):
+    planet = Planet.query.get(planet_id)
+    if planet is None:
+        return jsonify({"error": "planet not found"}), 404
+    
+    return jsonify(planet.serialize()), 200
 
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])

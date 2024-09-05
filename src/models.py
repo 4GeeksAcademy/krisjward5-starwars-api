@@ -9,7 +9,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(80), unique=False, nullable=False)
     person_favorites = db.relationship('Person', secondary="person_favorite", back_populates='favorited_by_users')
-    planet_favorites = db.relationship('Planet', secondary="planet_favorite", back_populates='planet_favorited_by_user')
+    planet_favorites = db.relationship('Planet', secondary="planet_favorite", back_populates='planet_favorited_by_users')
 
     def __repr__(self):
         return '<User %r>' % self.email
